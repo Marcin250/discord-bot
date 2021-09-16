@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Discord\Bot;
+use App\Discord\BotInterface;
 use Illuminate\Console\Command;
 
 class RunDiscordBot extends Command
@@ -13,8 +13,8 @@ class RunDiscordBot extends Command
     /** @var string */
     protected $description = 'Runs discord bot';
 
-    public function handle(): void
+    public function handle(BotInterface $bot): void
     {
-        (new Bot())->handle();
+        $bot->run();
     }
 }

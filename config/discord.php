@@ -2,6 +2,6 @@
 
 return [
     'bot' => [
-        'token' => env('DISCORD_BOT_TOKEN', null),
+        'token' => env('DISCORD_BOT_TOKEN'),
     ],
 ];

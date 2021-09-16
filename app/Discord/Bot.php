@@ -2,56 +2,38 @@
 
 namespace App\Discord;
 
+use App\Builders\UnicodeStringBuilder;
+use App\Discord\Listeners\AbstractListener;
+use App\Discord\Listeners\ListenerFactory;
 use Discord\Discord;
-use Discord\Parts\Channel\Message;
-use Discord\Parts\WebSockets\MessageReaction;
 use Discord\WebSockets\Event;
-use InvalidArgumentException;
-use React\EventLoop\Factory;
 
-class Bot
+class Bot implements BotInterface
 {
-    use CommandTrait;
-    use ReactionTrait;
-    use ModerationTrait;
+    private const EVENTS = [
+        Event::MESSAGE_CREATE,
+        Event::MESSAGE_REACTION_ADD,
+    ];
 
     /** @var Discord */
     private $discord;
 
-    public function __construct()
+    /** @var ListenerFactory */
+    private $listenerFactory;
+
+    public function __construct(Discord $discord, ListenerFactory $listenerFactory)
     {
-        $this->discord = new Discord([
-            'token' => (string) config('discord.bot.token'),
-            'loop' => Factory::create(),
-        ]);
+        $this->discord = $discord;
+        $this->listenerFactory = $listenerFactory;
     }
 
-    public function handle(): void
+    public function run(): void
     {
-        $this->discord->on(Event::MESSAGE_CREATE, function (Message $message) {
-            if ($this->shouldModerate($message) && $this->moderateMessage($message)) {
-                return;
-            }
-
-            $this->isCommand($message) ? $this->handleCommand($message) : null;
-            $this->shouldReact($message) ? $this->reactToMessage($message) : null;
-        });
-
-        $this->discord->on(Event::MESSAGE_REACTION_ADD, function (MessageReaction $reaction) {
-            $reactionString = $this->toReactionString($reaction->emoji->name, $reaction->emoji->id);
-
-            $reactionString === Emoji::ARJEN ? $this->reactWithArjenToArjenReaction($reaction->message) : null;
-        });
+        foreach (self::EVENTS as $event) {
+            $type = UnicodeStringBuilder::createFromString(mb_strtolower($event))->camel()->toString();
+            $this->discord->on($event, [$this->listenerFactory->{"{$type}Listener"}(), AbstractListener::LISTEN_METHOD]);
+        }
 
         $this->discord->run();
-    }
-
-    private function handleCommand(Message $message): void
-    {
-        try {
-            $this->executeCommand($message);
-        } catch (InvalidArgumentException $ex) {
-            $message->reply('please provide valid command');
-        }
     }
 }
