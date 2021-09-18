@@ -8,6 +8,7 @@ use App\Discord\Handlers\HandlerFactory;
 use App\Discord\Listeners\ListenerFactory;
 use Discord\Discord;
 use Illuminate\Support\ServiceProvider;
+use Psr\Log\NullLogger;
 use React\EventLoop\Factory;
 
 class AppServiceProvider extends ServiceProvider
@@ -18,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
             $discord = new Discord([
                 'token' => (string) config('discord.bot.token'),
                 'loop' => Factory::create(),
+                'logger' => new NullLogger(),
             ]);
 
             return new Bot($discord, new ListenerFactory(new HandlerFactory($discord)));

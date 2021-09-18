@@ -19,19 +19,12 @@ class HandlerFactory extends AbstractFactory
     public function __construct(Discord $discord)
     {
         $this->namespace = __NAMESPACE__;
+        $this->instanceType = AbstractHandler::class;
         $this->discord = $discord;
     }
 
     protected function createInstance(string $class): object
     {
         return new $class($this->discord);
-    }
-
-    /** @throws InvalidInstanceException */
-    protected function validateInstance(object $instance): void
-    {
-        if (!($instance instanceof AbstractHandler)) {
-            throw new InvalidInstanceException('');
-        }
     }
 }
