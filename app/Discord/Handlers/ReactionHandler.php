@@ -4,23 +4,29 @@ namespace App\Discord\Handlers;
 
 use App\Enums\Emoji;
 use Discord\Parts\Channel\Message;
+use Discord\Parts\WebSockets\MessageReaction;
 use Illuminate\Support\Str;
 
 class ReactionHandler extends AbstractHandler
 {
-    private const REACTIONS = [
+    private const MESSAGE_CREATE_REACTIONS = [
         'hello' => [Emoji::WAVE],
         'super' => [Emoji::PEPE_YEA, Emoji::THUMBS_UP],
         'forever' => [Emoji::ARJEN, Emoji::FLOOR],
     ];
 
-    public function reactToMessage(Message $message): void
+    private const MESSAGE_REACTION_ADD_REACTIONS = [
+        Emoji::ARJEN => [Emoji::ARJEN],
+    ];
+    private const MESSAGE_REACTION_REMOVE_REACTIONS = self::MESSAGE_REACTION_ADD_REACTIONS;
+
+    public function handleMessageCreate(Message $message): void
     {
         if ($message->author->username === $this->discord->user->username) {
             return;
         }
 
-        foreach (self::REACTIONS as $phrase => $reactions) {
+        foreach (self::MESSAGE_CREATE_REACTIONS as $phrase => $reactions) {
             if (Str::contains(Str::lower($message->content), $phrase)) {
                 array_walk($reactions, static function (string $emoji) use ($message) {
                     $message->react($emoji);
@@ -29,13 +35,17 @@ class ReactionHandler extends AbstractHandler
         }
     }
 
-    public function reactWithArjenToArjenReaction(Message $message): void
+    public function handleMessageReactionAdd(MessageReaction $reaction): void
     {
-        $message->react(Emoji::ARJEN);
+        foreach (self::MESSAGE_REACTION_ADD_REACTIONS[$reaction->emoji->toReactionString()] ?? [] as $emoji) {
+            $reaction->message->react($emoji);
+        }
     }
 
-    public function toReactionString(?string $name, ?string $id): string
+    public function handleMessageReactionRemove(MessageReaction $reaction): void
     {
-        return ":{$name}:{$id}";
+        foreach (self::MESSAGE_REACTION_REMOVE_REACTIONS[$reaction->emoji->toReactionString()] ?? [] as $emoji) {
+            $reaction->message->deleteReaction(Message::REACT_DELETE_EMOJI, $emoji);
+        }
     }
 }

@@ -16,7 +16,7 @@
         "laravel/framework": "^8.40",
         "laravel/tinker": "^2.5",
         "symfony/string": "^5.3",
-        "team-reflex/discord-php": "^6.0"
+        "team-reflex/discord-php": "^5.1"
     },
     "require-dev": {
         "roave/security-advisories": "dev-latest",

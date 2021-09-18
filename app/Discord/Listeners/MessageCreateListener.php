@@ -12,7 +12,7 @@ class MessageCreateListener extends AbstractListener
             return;
         }
 
-        $this->handlerFactory->commandHandler()->handle($message);
-        $this->handlerFactory->reactionHandler()->reactToMessage($message);
+        $this->handlerFactory->commandHandler()->handleMessageCreate($message);
+        $this->handlerFactory->reactionHandler()->handleMessageCreate($message);
     }
 }
