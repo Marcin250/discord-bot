@@ -3,17 +3,21 @@
 namespace App\Discord;
 
 use App\Exceptions\InvalidClassException;
-use Carbon\Exceptions\InvalidIntervalException;
+use App\Exceptions\InvalidInstanceException;
+use stdClass;
 
 abstract class AbstractFactory
 {
     /** @var string */
     protected $namespace = __NAMESPACE__;
 
+    /** @var string */
+    protected $instanceType = stdClass::class;
+
     /** @var object[] */
     private $instances = [];
 
-    /** @throws InvalidClassException|InvalidIntervalException */
+    /** @throws InvalidClassException|InvalidInstanceException */
     public function __call(string $instanceType, array $arguments = []): object
     {
         $class = sprintf('%s\%s', $this->namespace, ucfirst($instanceType));
@@ -27,9 +31,7 @@ abstract class AbstractFactory
         }
 
         $instance = $this->createInstance($class);
-
         $this->validateInstance($instance);
-
         $this->instances[$class] = $instance;
 
         return $instance;
@@ -37,6 +39,11 @@ abstract class AbstractFactory
 
     abstract protected function createInstance(string $class): object;
 
-    /** @throws InvalidIntervalException */
-    abstract protected function validateInstance(object $instance): void;
+    /** @throws InvalidInstanceException */
+    protected function validateInstance(object $instance): void
+    {
+        if (!($instance instanceof $this->instanceType)) {
+            throw new InvalidInstanceException('Invalid instance');
+        }
+    }
 }
