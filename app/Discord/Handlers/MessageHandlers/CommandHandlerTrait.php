@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Discord\Handlers;
+namespace App\Discord\Handlers\MessageHandlers;
 
 use App\Builders\DiscordAdminBuilder;
 use App\Enums\Command;
@@ -13,14 +13,14 @@ use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-class CommandHandler extends AbstractHandler
+trait CommandHandlerTrait
 {
-    private const COMMANDS = [
+    protected static $commands = [
         Command::LIST => 'listCommands',
         Command::JOKE => 'replyWithJoke',
     ];
 
-    private const ADMIN_COMMANDS = [
+    protected static $adminCommands = [
         Command::DELETE_CHANNEL_MESSAGES => 'deleteChannelMessages',
     ];
 
@@ -33,10 +33,10 @@ class CommandHandler extends AbstractHandler
         $this->chuckNorrisJokesApiClient = new ChuckNorrisJokesApiClient();
     }
 
-    public function handleMessageCreate(Message $message): void
+    public function executeCommand(Message $message): void
     {
-        if (array_key_exists($message->content, self::ADMIN_COMMANDS) && $this->isAdmin($message->author)) {
-            $this->{self::ADMIN_COMMANDS[$message->content]}($message);
+        if (array_key_exists($message->content, static::$adminCommands) && $this->isAdmin($message->author)) {
+            $this->{static::$adminCommands[$message->content]}($message);
 
             return;
         }
@@ -45,13 +45,13 @@ class CommandHandler extends AbstractHandler
             return;
         }
 
-        $this->{self::COMMANDS[$message->content]}($message);
+        $this->{static::$commands[$message->content]}($message);
     }
 
     private function isCommand(Message $message): bool
     {
         return Str::startsWith($message->content, '!')
-            && array_key_exists($message->content, self::COMMANDS);
+            && array_key_exists($message->content, static::$commands);
     }
 
     private function isAdmin(User $user): bool
@@ -65,7 +65,7 @@ class CommandHandler extends AbstractHandler
     /** @throws Exception */
     private function listCommands(Message $message): void
     {
-        $commandList = implode(', ', array_diff(array_keys(self::COMMANDS), [Command::LIST]));
+        $commandList = implode(', ', array_diff(array_keys(static::$commands), [Command::LIST]));
         $this->discord->getChannel($message->channel_id)->sendMessage("Available commands: {$commandList}");
     }
 

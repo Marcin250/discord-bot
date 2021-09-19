@@ -7,9 +7,8 @@ use App\Exceptions\InvalidInstanceException;
 use Discord\Discord;
 
 /**
- * @method CommandHandler commandHandler()
+ * @method MessageHandler messageHandler()
  * @method ReactionHandler reactionHandler()
- * @method ModerationHandler moderationHandler()
  */
 class HandlerFactory extends AbstractFactory
 {

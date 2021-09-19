@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Discord\Handlers;
+namespace App\Discord\Handlers\MessageHandlers;
 
 use Discord\Parts\Channel\Message;
 use Illuminate\Support\Str;
 
-class ModerationHandler extends AbstractHandler
+trait ModerationHandlerTrait
 {
-    private const MODERATION_CASES = [
+    protected static $moderationCases = [
         'test123' => ['delete'],
     ];
 
@@ -15,7 +15,7 @@ class ModerationHandler extends AbstractHandler
     {
         $skipNextActions = [];
 
-        foreach (self::MODERATION_CASES as $case => $methods) {
+        foreach (static::$moderationCases as $case => $methods) {
             if (!Str::contains($message->content, $case)) {
                 continue;
             }

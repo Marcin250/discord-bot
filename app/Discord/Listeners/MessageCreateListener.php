@@ -8,11 +8,7 @@ class MessageCreateListener extends AbstractListener
 {
     public function listen(Message $message): void
     {
-        if ($this->handlerFactory->moderationHandler()->moderateMessage($message)) {
-            return;
-        }
-
-        $this->handlerFactory->commandHandler()->handleMessageCreate($message);
+        $this->handlerFactory->messageHandler()->handleMessageCreate($message);
         $this->handlerFactory->reactionHandler()->handleMessageCreate($message);
     }
 }
