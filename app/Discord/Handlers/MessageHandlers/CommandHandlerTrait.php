@@ -5,19 +5,22 @@ namespace App\Discord\Handlers\MessageHandlers;
 use App\Builders\DiscordAdminBuilder;
 use App\Enums\Command;
 use App\ExternalApi\ChuckNorrisJokesApiClient;
+use App\Youtube\VideoDownloader;
 use Discord\Discord;
-use Discord\Helpers\Collection;
 use Discord\Parts\Channel\Message;
 use Discord\Parts\User\User;
 use Exception;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Throwable;
 
 trait CommandHandlerTrait
 {
+    use AdminCommandHandlerTrait;
+
     protected static $commands = [
         Command::LIST => 'listCommands',
         Command::JOKE => 'replyWithJoke',
+        Command::DOWNLOAD_YOUTUBE_VIDEO => 'downloadYoutubeVideo',
     ];
 
     protected static $adminCommands = [
@@ -27,31 +30,33 @@ trait CommandHandlerTrait
     /** @var ChuckNorrisJokesApiClient */
     private $chuckNorrisJokesApiClient;
 
+    /** @var VideoDownloader */
+    private $videoDownloader;
+
     public function __construct(Discord $discord)
     {
         parent::__construct($discord);
         $this->chuckNorrisJokesApiClient = new ChuckNorrisJokesApiClient();
+        $this->videoDownloader = new VideoDownloader();
     }
 
     public function executeCommand(Message $message): void
     {
-        if (array_key_exists($message->content, static::$adminCommands) && $this->isAdmin($message->author)) {
-            $this->{static::$adminCommands[$message->content]}($message);
+        if (!Str::startsWith($message->content, '!')) {
+            return;
+        }
+
+        [$firstPhrase] = explode(' ', $message->content);
+
+        if (array_key_exists($firstPhrase, static::$adminCommands) && $this->isAdmin($message->author)) {
+            $this->{static::$adminCommands[$firstPhrase]}($message);
 
             return;
         }
 
-        if (!$this->isCommand($message)) {
-            return;
+        if (array_key_exists($firstPhrase, static::$commands)) {
+            $this->{static::$commands[$firstPhrase]}($message);
         }
-
-        $this->{static::$commands[$message->content]}($message);
-    }
-
-    private function isCommand(Message $message): bool
-    {
-        return Str::startsWith($message->content, '!')
-            && array_key_exists($message->content, static::$commands);
     }
 
     private function isAdmin(User $user): bool
@@ -76,16 +81,20 @@ trait CommandHandlerTrait
     }
 
     /** @throws Exception */
-    private function deleteChannelMessages(Message $message): void
+    private function downloadYoutubeVideo(Message $message): void
     {
-        $this->discord->getChannel($message->channel_id)->getMessageHistory([])->done(function (Collection $messages) use ($message) {
-            $messageCount = count($messages);
-            Log::info("Pending deletion: Channel[ID:{$message->channel_id}, Name:{$message->channel->name}, Messages: {$messageCount}]");
+        $videoUrl = trim(str_replace(Command::DOWNLOAD_YOUTUBE_VIDEO, '', $message->content));
 
-            /** @var Message $messageToDelete */
-            foreach ($messages as $messageToDelete) {
-                $messageToDelete->delete();
-            }
-        });
+        try {
+            $youtubeVideo = $this->videoDownloader->download($videoUrl);
+            $message->author->sendMessage("Name: {$youtubeVideo->name()}");
+            $message->author->sendMessage("Audio only: {$youtubeVideo->bestAudioOnlyUrl()}");
+            $message->author->sendMessage("Video only: {$youtubeVideo->bestVideoOnlyUrl()}");
+            $message->author->sendMessage("Video: {$youtubeVideo->bestVideoUrl()}");
+        } catch (Throwable $exception) {
+            $message->author->sendMessage("Blad: {$exception->getMessage()}");
+        }
+
+        $message->delete();
     }
 }
