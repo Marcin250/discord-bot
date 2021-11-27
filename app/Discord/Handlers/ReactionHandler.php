@@ -37,11 +37,6 @@ class ReactionHandler extends AbstractHandler
 
     public function handleMessageReactionAdd(MessageReaction $reaction): void
     {
-        if (($this->discord->username === $reaction->user->username)
-            && ($this->discord->discriminator === $reaction->user->discriminator)) {
-            return;
-        }
-
         foreach (self::MESSAGE_REACTION_ADD_REACTIONS[$reaction->emoji->toReactionString()] ?? [] as $emoji) {
             $reaction->message->react($emoji);
         }
