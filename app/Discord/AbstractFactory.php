@@ -20,11 +20,11 @@ abstract class AbstractFactory
     /** @throws InvalidClassException|InvalidInstanceException */
     public function __call(string $instanceType, array $arguments = []): object
     {
-        $class = sprintf('%s\%s', $this->namespace, ucfirst($instanceType));
-
-        if (array_key_exists($class, $this->instances)) {
-            return $this->instances[$class];
+        if (array_key_exists($instanceType, $this->instances)) {
+            return $this->instances[$instanceType];
         }
+
+        $class = sprintf('%s\%s', $this->namespace, ucfirst($instanceType));
 
         if (!class_exists($class)) {
             throw new InvalidClassException("Invalid class name");
