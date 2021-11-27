@@ -9,7 +9,7 @@ use Discord\Discord;
 use Discord\WebSockets\Event;
 use Illuminate\Support\Facades\Log;
 
-class Bot implements BotInterface
+class BotService implements BotServiceInterface
 {
     private const EVENTS = [
         Event::MESSAGE_CREATE,
@@ -32,10 +32,10 @@ class Bot implements BotInterface
     public function run(): void
     {
         foreach (self::EVENTS as $event) {
-            $type = UnicodeStringBuilder::createFromString(mb_strtolower($event))->camel()->toString();
+            $type = UnicodeStringBuilder::createFromString($event)->lower()->camel()->toString();
             $this->discord->on($event, [$this->listenerFactory->{"{$type}Listener"}(), AbstractListener::LISTEN_METHOD]);
 
-            Log::info("Event: $event registered");
+            Log::info("[{$event}] event registered");
         }
 
         $this->discord->run();

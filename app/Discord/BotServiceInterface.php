@@ -2,7 +2,7 @@
 
 namespace App\Discord;
 
-interface BotInterface
+interface BotServiceInterface
 {
     public function run(): void;
 }

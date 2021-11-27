@@ -8,6 +8,7 @@ use App\ExternalApi\ChuckNorrisJokesApiClient;
 use App\Youtube\VideoDownloader;
 use Discord\Discord;
 use Discord\Parts\Channel\Message;
+use Discord\Parts\User\Member;
 use Discord\Parts\User\User;
 use Exception;
 use Illuminate\Support\Str;
@@ -59,7 +60,8 @@ trait CommandHandlerTrait
         }
     }
 
-    private function isAdmin(User $user): bool
+    /** @param User|Member $user */
+    private function isAdmin($user): bool
     {
         $discordAdmin = DiscordAdminBuilder::fromConfig();
 
@@ -92,7 +94,7 @@ trait CommandHandlerTrait
             $message->author->sendMessage("Video only: {$youtubeVideo->bestVideoOnlyUrl()}");
             $message->author->sendMessage("Video: {$youtubeVideo->bestVideoUrl()}");
         } catch (Throwable $exception) {
-            $message->author->sendMessage("Blad: {$exception->getMessage()}");
+            $message->author->sendMessage("Error: {$exception->getMessage()}");
         }
 
         $message->delete();

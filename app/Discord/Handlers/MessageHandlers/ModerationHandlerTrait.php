@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 trait ModerationHandlerTrait
 {
     protected static $moderationCases = [
-        'test123' => ['delete'],
+        'test123' => ['deleteMessage'],
     ];
 
     public function moderateMessage(Message $message): bool
@@ -21,14 +21,14 @@ trait ModerationHandlerTrait
             }
 
             $skipNextActions = array_merge($skipNextActions, array_map(function (string $method) use ($message, $case) {
-                return $this->{$method}($message, ['case' => $case]);
+                return $this->{$method}($message);
             }, $methods));
         }
 
         return in_array(true, $skipNextActions, true);
     }
 
-    private function delete(Message $message): bool
+    private function deleteMessage(Message $message): bool
     {
         $message->delete();
 

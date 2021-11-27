@@ -169,7 +169,8 @@ return [
         /*
          * Application Service Providers...
          */
-        App\Providers\AppServiceProvider::class,
+        App\Providers\BotServiceProvider::class,
+        App\Providers\CacheServiceProvider::class,
     ],
 
     /*
