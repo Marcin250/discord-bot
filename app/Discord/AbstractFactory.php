@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Discord;
 
 use App\Exceptions\InvalidClassException;
@@ -27,7 +29,7 @@ abstract class AbstractFactory
         $class = sprintf('%s\%s', $this->namespace, ucfirst($instanceType));
 
         if (!class_exists($class)) {
-            throw new InvalidClassException("Invalid class name");
+            throw new InvalidClassException('Invalid class name');
         }
 
         $instance = $this->createInstance($class);

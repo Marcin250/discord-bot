@@ -1,9 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Discord\Handlers;
 
 use App\Discord\AbstractFactory;
-use App\Exceptions\InvalidInstanceException;
 use Discord\Discord;
 
 /**

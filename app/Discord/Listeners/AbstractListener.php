@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Discord\Listeners;
 
 use App\Discord\Handlers\HandlerFactory;
