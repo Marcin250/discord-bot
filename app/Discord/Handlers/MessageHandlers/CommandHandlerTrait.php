@@ -1,12 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Discord\Handlers\MessageHandlers;
 
 use App\Builders\DiscordAdminBuilder;
 use App\Enums\Command;
 use App\ExternalApi\ChuckNorrisJokesApiClient;
 use App\Youtube\VideoDownloader;
-use Discord\Discord;
 use Discord\Parts\Channel\Message;
 use Discord\Parts\User\Member;
 use Discord\Parts\User\User;
@@ -34,13 +35,6 @@ trait CommandHandlerTrait
     /** @var VideoDownloader */
     private $videoDownloader;
 
-    public function __construct(Discord $discord)
-    {
-        parent::__construct($discord);
-        $this->chuckNorrisJokesApiClient = new ChuckNorrisJokesApiClient();
-        $this->videoDownloader = new VideoDownloader();
-    }
-
     public function executeCommand(Message $message): void
     {
         if (!Str::startsWith($message->content, '!')) {
@@ -60,7 +54,7 @@ trait CommandHandlerTrait
         }
     }
 
-    /** @param User|Member $user */
+    /** @param Member|User $user */
     private function isAdmin($user): bool
     {
         $discordAdmin = DiscordAdminBuilder::fromConfig();

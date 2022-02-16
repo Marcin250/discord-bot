@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Cache;
 
 use App\Exceptions\InvalidClassException;
@@ -19,14 +21,14 @@ class CacheFactory implements CacheFactoryInterface
         $class = sprintf('%s\%s', __NAMESPACE__, ucfirst($cacheService));
 
         if (!class_exists($class)) {
-            throw new InvalidClassException("Class does not exists");
+            throw new InvalidClassException('Class does not exists');
         }
 
         if (!in_array(CacheServiceInterface::class, class_implements($class), true)) {
-            throw new InvalidClassException("Class does not implements CacheServiceInterface");
+            throw new InvalidClassException('Class does not implements CacheServiceInterface');
         }
 
-        $instance = new $class;
+        $instance = new $class();
 
         $this->cacheServiceInstances[$cacheService] = $instance;
 

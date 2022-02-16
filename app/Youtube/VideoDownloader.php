@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Youtube;
 
 use App\Builders\YoutubeVideoBuilder;
@@ -16,7 +18,7 @@ class VideoDownloader
     private const NODE_MODULES_YOUTUBE_DL_EXEC_BIN_YOUTUBE_DL = 'node_modules/youtube-dl-exec/bin/youtube-dl';
     private const COMMAND_PARAMETERS_PATTERN = '%s --format=18 --dump-single-json --no-warnings --no-call-home --no-check-certificate --prefer-free-formats --youtube-skip-dash-manifest --referer=%s > %s';
 
-    /** @throws InvalidYoutubeVideoIdException|FileNotFoundException|MissingFormatsException */
+    /** @throws FileNotFoundException|InvalidYoutubeVideoIdException|MissingFormatsException */
     public function download(string $youtubeVideoUrl): YoutubeVideo
     {
         $query = parse_url($youtubeVideoUrl)['query'];
@@ -36,7 +38,7 @@ class VideoDownloader
         exec($this->createCommand($youtubeVideoUrl, $resultFilePath));
 
         if (!file_exists($resultFilePath)) {
-            throw new FileNotFoundException("Details file not found");
+            throw new FileNotFoundException('Details file not found');
         }
 
         $details = json_decode(file_get_contents($resultFilePath));

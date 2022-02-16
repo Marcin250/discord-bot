@@ -1,10 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Discord\Handlers;
 
 use App\Cache\CacheFactoryInterface;
 use App\Discord\Handlers\MessageHandlers\CommandHandlerTrait;
 use App\Discord\Handlers\MessageHandlers\ModerationHandlerTrait;
+use App\ExternalApi\ChuckNorrisJokesApiClient;
+use App\Youtube\VideoDownloader;
 use Discord\Discord;
 use Discord\Parts\Channel\Message;
 
@@ -21,6 +25,8 @@ class MessageHandler extends AbstractHandler
         parent::__construct($discord);
 
         $this->cacheFactory = app(CacheFactoryInterface::class);
+        $this->chuckNorrisJokesApiClient = new ChuckNorrisJokesApiClient();
+        $this->videoDownloader = new VideoDownloader();
     }
 
     public function handleMessageCreate(Message $message): void

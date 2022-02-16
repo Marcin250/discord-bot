@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Discord\Handlers\MessageHandlers;
 
 use Discord\Parts\Channel\Message;
@@ -20,7 +22,7 @@ trait ModerationHandlerTrait
                 continue;
             }
 
-            $skipNextActions = array_merge($skipNextActions, array_map(function (string $method) use ($message, $case) {
+            $skipNextActions = array_merge($skipNextActions, array_map(function (string $method) use ($message) {
                 return $this->{$method}($message);
             }, $methods));
         }
