@@ -171,6 +171,7 @@ return [
          */
         App\Providers\BotServiceProvider::class,
         App\Providers\CacheServiceProvider::class,
+        App\Providers\QueueServiceProvider::class,
     ],
 
     /*
