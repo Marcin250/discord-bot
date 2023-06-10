@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\Discord\Handlers\MessageHandlers;
 
-use App\Builders\DiscordAdminBuilder;
 use App\Enums\Command;
 use App\ExternalApi\ChuckNorrisJokesApiClient;
+use App\Queues\MessageQueue;
+use App\Queues\MessageQueue\Message as MessageQueueMessage;
+use App\Queues\MessageQueue\Queue;
 use App\Youtube\VideoDownloader;
 use Discord\Parts\Channel\Message;
+use Discord\Parts\Guild\Role;
 use Discord\Parts\User\Member;
-use Discord\Parts\User\User;
 use Exception;
 use Illuminate\Support\Str;
 use Throwable;
@@ -19,21 +21,11 @@ trait CommandHandlerTrait
 {
     use AdminCommandHandlerTrait;
 
-    protected static $commands = [
-        Command::LIST => 'listCommands',
-        Command::JOKE => 'replyWithJoke',
-        Command::DOWNLOAD_YOUTUBE_VIDEO => 'downloadYoutubeVideo',
-    ];
+    private ChuckNorrisJokesApiClient $chuckNorrisJokesApiClient;
 
-    protected static $adminCommands = [
-        Command::DELETE_CHANNEL_MESSAGES => 'deleteChannelMessages',
-    ];
+    private VideoDownloader $videoDownloader;
 
-    /** @var ChuckNorrisJokesApiClient */
-    private $chuckNorrisJokesApiClient;
-
-    /** @var VideoDownloader */
-    private $videoDownloader;
+    private MessageQueue $messageQueue;
 
     public function executeCommand(Message $message): void
     {
@@ -43,30 +35,41 @@ trait CommandHandlerTrait
 
         [$firstPhrase] = explode(' ', $message->content);
 
-        if (array_key_exists($firstPhrase, static::$adminCommands) && $this->isAdmin($message->author)) {
-            $this->{static::$adminCommands[$firstPhrase]}($message);
+        $command = Command::tryFrom($firstPhrase);
 
+        if ((!($command instanceof Command)) || ($command->isAdmin() && !$this->isAdmin($message->member))) {
             return;
         }
 
-        if (array_key_exists($firstPhrase, static::$commands)) {
-            $this->{static::$commands[$firstPhrase]}($message);
+        if (!is_null($commandMethod = $this->commandMethod($command))) {
+            $this->{$commandMethod}($message);
         }
     }
 
-    /** @param Member|User $user */
-    private function isAdmin($user): bool
+    private function isAdmin(?Member $member): bool
     {
-        $discordAdmin = DiscordAdminBuilder::fromConfig();
+        return $member instanceof Member
+            ? ($member->roles->find(fn (Role $role) => $role->name === 'Owner')) instanceof Role
+            : false;
+    }
 
-        return $user->username === $discordAdmin->getUsername()
-            && $user->discriminator === $discordAdmin->getDiscriminator();
+    private function commandMethod(Command $command): ?string
+    {
+        return match($command) {
+            Command::LIST => 'listCommands',
+            Command::JOKE => 'replyWithJoke',
+            Command::DOWNLOAD_YOUTUBE_VIDEO => 'downloadYoutubeVideo',
+            Command::DELETE_CHANNEL_MESSAGES => 'deleteChannelMessages',
+            Command::QUEUE_MESSAGE => 'queueMessage',
+            default => null,
+        };
     }
 
     /** @throws Exception */
     private function listCommands(Message $message): void
     {
-        $commandList = implode(', ', array_diff(array_keys(static::$commands), [Command::LIST]));
+        $commandList = array_map(static fn (Command $command) => $command->value, Command::cases());
+        $commandList = implode(', ', array_diff($commandList, [Command::LIST->value]));
         $this->discord->getChannel($message->channel_id)->sendMessage("Available commands: {$commandList}");
     }
 
@@ -79,10 +82,8 @@ trait CommandHandlerTrait
     /** @throws Exception */
     private function downloadYoutubeVideo(Message $message): void
     {
-        $videoUrl = trim(str_replace(Command::DOWNLOAD_YOUTUBE_VIDEO, '', $message->content));
-
         try {
-            $youtubeVideo = $this->videoDownloader->download($videoUrl);
+            $youtubeVideo = $this->videoDownloader->download(Command::DOWNLOAD_YOUTUBE_VIDEO->contentAfterCommand($message->content));
             $message->author->sendMessage("Name: {$youtubeVideo->name()}");
             $message->author->sendMessage("Audio only: {$youtubeVideo->bestAudioOnlyUrl()}");
             $message->author->sendMessage("Video only: {$youtubeVideo->bestVideoOnlyUrl()}");
@@ -92,5 +93,13 @@ trait CommandHandlerTrait
         }
 
         $message->delete();
+    }
+
+    private function queueMessage(Message $message): void
+    {
+        $this->messageQueue->dispatch(
+            Queue::TWITCH_IRC_BOT_MESSAGE_QUEUE,
+            new MessageQueueMessage(Command::QUEUE_MESSAGE->contentAfterCommand($message->content))
+        );
     }
 }

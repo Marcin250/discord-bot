@@ -10,7 +10,7 @@ use Illuminate\Console\Command;
 class RunBotService extends Command
 {
     /** @var string */
-    protected $signature = 'app:run-bot-service';
+    protected $signature = 'app:start-bot';
 
     /** @var string */
     protected $description = 'Runs bot';
